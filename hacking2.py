@@ -35,6 +35,7 @@ def appStarted(self):
 
     #stage (placement of a few black boxes)
     self.stage = [[None] * self.lCols for __ in range(self.lRows)]
+    self.stage = generateSimpleMaze(self, self.stage)
 
     #etc drawing
     self.upperRightCorner = (self.width//2 - (self.lRows * self.lSize) // 2, 
@@ -43,6 +44,13 @@ def appStarted(self):
 def generateSimpleMaze(self, matrix):
     rows = len(matrix)
     cols = len(matrix[0])
+    for row in range(rows):
+        for col in range(cols):
+            choice = random.randint(0,3)
+            if choice == 0:
+                matrix[row][col] = LargeBox(row, col)
+    
+    return matrix
 
 #
 # Control
@@ -91,7 +99,7 @@ def getSCell(self, x, y):
 def redrawAll(self, canvas):
     drawBackground(self, canvas)
     drawLGrid(self, canvas)
-    drawSGrid(self, canvas)
+    #drawSGrid(self, canvas)
 
 #code from https://www.cs.cmu.edu/~112/notes/notes-graphics.html#customColors
 def rgbString(r, g, b):
@@ -112,7 +120,11 @@ def drawLGrid(self, canvas):
             x0, y0, x1, y1 = getLCellBounds(self, row, col)
             smallShift = 2
             x0, y0, x1, y1 = x0 + smallShift, y0 + smallShift, x1 - smallShift, y1 - smallShift
-            canvas.create_rectangle(x0, y0, x1, y1)
+            if self.stage[row][col] != None:
+                canvas.create_rectangle(x0, y0, x1, y1, fill = "black")
+            else:
+                #canvas.create_rectangle(x0, y0, x1, y1)
+                pass
 
 def drawSGrid(self, canvas):
     rows, cols = self.sRows, self.sCols
