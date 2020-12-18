@@ -113,6 +113,7 @@ def drawBackground(self, canvas):
     canvas.create_rectangle(self.upperRightCorner, self.upperRightCorner[0] + frameFactor, 
                             self.upperRightCorner[1] + frameFactor, fill = stageColor)
 
+#oh wait
 def drawLGrid(self, canvas):
     rows, cols = self.lRows, self.lCols
     for row in range(rows):
