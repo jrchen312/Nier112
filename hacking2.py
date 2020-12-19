@@ -331,7 +331,7 @@ def drawPointer(self, canvas):
     r = 5
     canvas.create_oval(x-r, y-r, x+r, y+r, fill = "black", width = 0)
 
-    canvas.create_rectangle(getSCellBounds(self, self.pointerRow, self.pointerCol), fill = "red")
+    #canvas.create_rectangle(getSCellBounds(self, self.pointerRow, self.pointerCol), fill = "red")
 
 
 #################################################
