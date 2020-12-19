@@ -14,6 +14,7 @@ or something idk
 """
 from cmu_112_graphics import *
 import random
+import math
 
 class LargeBox(object):
     def __init__(self, row, col):
@@ -29,7 +30,7 @@ def appStarted(self):
     self.lSize = 60
 
     #small grid:
-    self.sSize = 10
+    self.sSize = 6
     self.sRows = self.lRows * self.lSize // self.sSize #200?
     self.sCols = self.lCols * self.lSize // self.sSize #200
 
@@ -40,6 +41,12 @@ def appStarted(self):
     #etc drawing
     self.upperRightCorner = (self.width//2 - (self.lRows * self.lSize) // 2, 
                              self.height//2 - (self.lCols * self.lSize // 2))
+
+    #pointer
+    self.pointerRow = 0
+    self.pointerCol = 0
+    self.pointerAngle = math.pi/2
+    self.pointerGoal = None
 
 def generateSimpleMaze(self, matrix):
     rows = len(matrix)
@@ -57,6 +64,35 @@ def generateSimpleMaze(self, matrix):
 #
 def mousePressed(self, event):
     print(getLCell(self, event.x, event.y))
+
+def keyPressed(self, event):
+    if event.key in "wasd":
+        if event.key == "a":
+            shift = (0, -1)
+        elif event.key == "d":
+            shift = (0, 1)
+        elif event.key == "w":
+            shift = (-1, 0)
+        elif event.key == "s":
+            shift = (1, 0)
+        self.pointerRow += shift[0] * 3
+        self.pointerCol += shift[1] * 3
+
+def mouseMoved(self, event):
+    #calculate new angle
+    x0, y0, x1, y1 = getSCellBounds(self, self.pointerRow, self.pointerCol)
+    x = x0 + self.sSize // 2
+    y = y0 + self.sSize // 2
+
+    yDif = event.y - y
+    xDif = x - event.x
+    try:
+        newAngle = math.atan(yDif/xDif)
+    except:
+        newAngle = math.atan(-yDif/.01)
+    if xDif > 0:
+        newAngle = newAngle + math.pi
+    self.pointerAngle = newAngle 
 
 
 def timerFired(self):
@@ -99,6 +135,7 @@ def getSCell(self, x, y):
 def redrawAll(self, canvas):
     drawBackground(self, canvas)
     drawLGrid(self, canvas)
+    drawPointer(self, canvas)
     #drawSGrid(self, canvas)
 
 #code from https://www.cs.cmu.edu/~112/notes/notes-graphics.html#customColors
@@ -136,7 +173,50 @@ def drawSGrid(self, canvas):
             x0, y0, x1, y1 = x0 + smallShift, y0 + smallShift, x1 - smallShift, y1 - smallShift
             canvas.create_rectangle(x0, y0, x1, y1)
 
+def drawPointer(self, canvas):
     
+    x0, y0, x1, y1 = getSCellBounds(self, self.pointerRow, self.pointerCol)
+    x = x0 + self.sSize // 2
+    y = y0 + self.sSize // 2
+    angle = self.pointerAngle
+
+    color = rgbString(250, 247, 230)
+    #radius of the two small edges
+    r = 20
+    theta = math.pi/3
+    x0, y0 = x, y
+    x1, y1 = x0 + r*math.cos(angle-theta), y0 - r * math.sin(angle-theta)
+    #radius of the long line
+    r2 = 50
+    x2, y2 = x + r2 * math.cos(angle), y - r2 * math.sin(angle)
+    x3, y3 = x0 + r*math.cos(angle+theta), y0 - r * math.sin(angle+theta)
+    canvas.create_line(x, y, x1, y1)
+    canvas.create_line(x, y, x3, y3)
+    canvas.create_polygon(x0, y0, x1, y1, x2, y2, x3, y3, fill = color, 
+                          outline = "tan", width = 2)
+    #little tail things (left first)
+    r = 22
+    theta2 = math.pi/2
+    x4, y4 = x + r*math.cos(angle+theta2), y - r * math.sin(angle + theta2)
+    canvas.create_line(x3, y3, x4, y4)
+    x5, y5 = x + 20*math.cos(angle+math.pi), y - 20* math.sin(angle + math.pi)
+    canvas.create_polygon(x3, y3, x4, y4, x5, y5, x, y, fill = color, 
+                         outline = 'tan', width = 2)
+    #right little tail thing
+    x6, y6 = x + r*math.cos(angle-theta2), y-r*math.sin(angle - theta2)
+    canvas.create_polygon(x1, y1, x6, y6, x5, y5, x, y, fill=color, 
+                            outline = "tan", width = 2)
+
+    #temp line showing where the pointer is looking
+    dirX = x + r2 * math.cos(angle)
+    dirY = y - r2 * math.sin(angle)
+    #canvas.create_line(x, y, dirX, dirY, fill = "red")
+
+    #black dot in middle:
+    r = 5
+    canvas.create_oval(x-r, y-r, x+r, y+r, fill = "black", width = 0)
+
+    canvas.create_rectangle(getSCellBounds(self, self.pointerRow, self.pointerCol), fill = "red")
 
 
 #################################################
