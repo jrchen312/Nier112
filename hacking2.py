@@ -21,16 +21,19 @@ class LargeBox(object):
         self.row = row
         self.col = col
         self.color = "black"
+    
+    def __repr__(self):
+        return f"box at ({self.row}, {self.col})"
 
 def appStarted(self):
-
+    self.timerDelay = 20
     #large grid:
     self.lRows = 10
     self.lCols = 10
     self.lSize = 60
 
     #small grid:
-    self.sSize = 6
+    self.sSize = 12
     self.sRows = self.lRows * self.lSize // self.sSize #200?
     self.sCols = self.lCols * self.lSize // self.sSize #200
 
@@ -75,8 +78,20 @@ def keyPressed(self, event):
             shift = (-1, 0)
         elif event.key == "s":
             shift = (1, 0)
-        self.pointerRow += shift[0] * 3
-        self.pointerCol += shift[1] * 3
+        else:
+            shift = (0,0)
+        setPointerGoal(self, (shift[0], shift[1]))
+        #self.pointerRow += shift[0] * 3
+        #self.pointerCol += shift[1] * 3
+
+def setPointerGoal(self, shift):
+    for i in range(1, 4):
+        newRow, newCol = self.pointerRow + shift[0] * i, self.pointerCol + shift[1] * i
+        if not isLegalPointerMove(self, (shift[0] * i,  shift[1] * i)):
+            i -= 1
+            break
+    self.pointerGoal = shift[0] * i, shift[1] * i
+    print(f"goal: {self.pointerGoal}, {i}")
 
 def mouseMoved(self, event):
     #calculate new angle
@@ -94,14 +109,50 @@ def mouseMoved(self, event):
         newAngle = newAngle + math.pi
     self.pointerAngle = newAngle 
 
-
 def timerFired(self):
-    pass
+    movePointer(self)
+
+
+def movePointer(self):
+    if self.pointerGoal != None:
+        dRow, dCol = self.pointerGoal
+        if dRow > 0:
+            self.pointerRow += 1
+            dRow -= 1
+        elif dRow < 0:
+            self.pointerRow -= 1
+            dRow += 1
+        elif dCol > 0:
+            self.pointerCol += 1
+            dCol -= 1
+        elif dCol < 0:
+            self.pointerCol -= 1
+            dCol += 1
+        else:
+            self.pointerGoal = None
+        self.pointerGoal = (dRow, dCol)
+        if self.pointerGoal == (0,0):
+            self.pointerGoal = None
 
 
 #
 # model to view and view to model stuff
 #
+def isLegalPointerMove(self, position):
+    newRow, newCol = self.pointerRow + position[0], self.pointerCol + position[1]
+    if newRow < 0 or newRow >= self.sRows or newCol < 0 or newCol >= self.sCols:
+        return False
+    #check if the newRow/newCol are in a stage square thignyu
+    newX, newY, x1, y1 = getSCellBounds(self, newRow, newCol)
+    newX, newY = newX + self.sSize // 2, newY + self.sSize // 2
+    row, col = getLCell(self, newX, newY)
+    if 0 <= row < self.lRows and 0 <= col < self.lCols:
+        if self.stage[row][col] != None:
+            print(self.stage[row][col])
+            return False
+    #legal move, continue. 
+    return True
+
 def getLCellBounds(self, row, col):
     xShift, yShift = self.upperRightCorner
     x0 = col * self.lSize + xShift

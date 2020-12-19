@@ -89,6 +89,7 @@ class MyApp(App):
             return
         
         if not self.hacking:
+            #issue: one problem is that the player cannot hold a key down, which is bad gameplay. 
             if self.mcIdle and (event.key in "asdq" or event.key == "Space") and not self.mcDash:
                 mainCharacter.keyInput(self, event)
             elif event.key == 'r':
