@@ -25,6 +25,18 @@ class LargeBox(object):
     def __repr__(self):
         return f"box at ({self.row}, {self.col})"
 
+
+
+class PointerBullet(object):
+    bullets = []
+
+    def __init__(self, x, y, dx, dy, angle):
+        self.x = x
+        self.y = y
+        self.dx = dx
+        self.dy = dy
+        self.angle = angle
+
 def appStarted(self):
     self.timerDelay = 20
     #large grid:
@@ -51,6 +63,13 @@ def appStarted(self):
     self.pointerAngle = math.pi/2
     self.pointerGoal = None
 
+    self.firing = False
+    self.bulletSpeed = 15
+    self.fireRate = 6
+    self.j = 0
+    self.pointerBullets = []
+    
+
 def generateSimpleMaze(self, matrix):
     rows = len(matrix)
     cols = len(matrix[0])
@@ -66,7 +85,11 @@ def generateSimpleMaze(self, matrix):
 # Control
 #
 def mousePressed(self, event):
+    self.firing = True
     print(getLCell(self, event.x, event.y))
+
+def mouseReleased(self, event):
+    self.firing = False
 
 def keyPressed(self, event):
     if event.key in "wasd":
@@ -81,8 +104,6 @@ def keyPressed(self, event):
         else:
             shift = (0,0)
         setPointerGoal(self, (shift[0], shift[1]))
-        #self.pointerRow += shift[0] * 3
-        #self.pointerCol += shift[1] * 3
 
 def setPointerGoal(self, shift):
     for i in range(1, 4):
@@ -94,13 +115,19 @@ def setPointerGoal(self, shift):
     print(f"goal: {self.pointerGoal}, {i}")
 
 def mouseMoved(self, event):
+    updatePointerAngle(self, event.x, event.y)
+
+def mouseDragged(self, event):
+    updatePointerAngle(self, event.x, event.y)
+
+def updatePointerAngle(self, ex, ey):
     #calculate new angle
     x0, y0, x1, y1 = getSCellBounds(self, self.pointerRow, self.pointerCol)
     x = x0 + self.sSize // 2
     y = y0 + self.sSize // 2
 
-    yDif = event.y - y
-    xDif = x - event.x
+    yDif = ey - y
+    xDif = x - ex
     try:
         newAngle = math.atan(yDif/xDif)
     except:
@@ -109,9 +136,39 @@ def mouseMoved(self, event):
         newAngle = newAngle + math.pi
     self.pointerAngle = newAngle 
 
+
 def timerFired(self):
     movePointer(self)
+    createBulletController(self)
+    moveBullets(self)
+    
 
+def createBulletController(self):
+    if self.firing:
+        self.j += 1
+        if self.j % self.fireRate == 0:
+            createBullet(self)
+
+def createBullet(self):
+    x0, y0, x1, y1 = getSCellBounds(self, self.pointerRow, self.pointerCol)
+    x = x0 + self.sSize // 2
+    y = y0 + self.sSize // 2
+    angle = self.pointerAngle
+    r2 = 50
+
+    dirX = x + r2 * math.cos(angle)
+    dirY = y - r2 * math.sin(angle)
+    dx = self.bulletSpeed * math.cos(angle)
+    dy = self.bulletSpeed * math.sin(angle)
+    bullet = PointerBullet(dirX, dirY, dx,  dy, angle)
+    self.pointerBullets.append(bullet)
+
+def moveBullets(self):
+    for bullet in self.pointerBullets:
+        x, y = bullet.x, bullet.y
+        dx, dy = bullet.dx, bullet.dy
+        x, y = x + dx, y - dy
+        bullet.x, bullet.y = x, y
 
 def movePointer(self):
     if self.pointerGoal != None:
@@ -187,6 +244,7 @@ def redrawAll(self, canvas):
     drawBackground(self, canvas)
     drawLGrid(self, canvas)
     drawPointer(self, canvas)
+    drawPointerBullets(self, canvas)
     #drawSGrid(self, canvas)
 
 #code from https://www.cs.cmu.edu/~112/notes/notes-graphics.html#customColors
@@ -223,6 +281,12 @@ def drawSGrid(self, canvas):
             smallShift = 0
             x0, y0, x1, y1 = x0 + smallShift, y0 + smallShift, x1 - smallShift, y1 - smallShift
             canvas.create_rectangle(x0, y0, x1, y1)
+
+def drawPointerBullets(self, canvas):
+    for bullet in self.pointerBullets:
+        x, y = bullet.x, bullet.y
+        color = rgbString(242, 238, 218)
+        canvas.create_oval(x-10, y-10, x+10, y+10, fill = color, width = 0)
 
 def drawPointer(self, canvas):
     
