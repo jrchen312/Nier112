@@ -25,17 +25,30 @@ class LargeBox(object):
     def __repr__(self):
         return f"box at ({self.row}, {self.col})"
 
-
-
 class PointerBullet(object):
-    bullets = []
-
     def __init__(self, x, y, dx, dy, angle):
         self.x = x
         self.y = y
         self.dx = dx
         self.dy = dy
         self.angle = angle
+    
+    def getPos(self):
+        return self.x, self.y
+
+class Core(object):
+    maxHealth = 3
+    def __init__(self, x, y, health):
+        self.x  = x
+        self.y = y
+        self.health = health
+        self.shield = True
+    
+class Enemy(object):
+    def __init__(self, row, col):
+        self.row = row
+        self.col = col
+
 
 def appStarted(self):
     self.timerDelay = 20
@@ -46,8 +59,8 @@ def appStarted(self):
 
     #small grid:
     self.sSize = 12
-    self.sRows = self.lRows * self.lSize // self.sSize #200?
-    self.sCols = self.lCols * self.lSize // self.sSize #200
+    self.sRows = self.lRows * self.lSize // self.sSize #
+    self.sCols = self.lCols * self.lSize // self.sSize #
 
     #stage (placement of a few black boxes)
     self.stage = [[None] * self.lCols for __ in range(self.lRows)]
@@ -78,7 +91,6 @@ def generateSimpleMaze(self, matrix):
             choice = random.randint(0,3)
             if choice == 0:
                 matrix[row][col] = LargeBox(row, col)
-    
     return matrix
 
 #
@@ -86,7 +98,6 @@ def generateSimpleMaze(self, matrix):
 #
 def mousePressed(self, event):
     self.firing = True
-    print(getLCell(self, event.x, event.y))
 
 def mouseReleased(self, event):
     self.firing = False
@@ -104,10 +115,11 @@ def keyPressed(self, event):
         else:
             shift = (0,0)
         setPointerGoal(self, (shift[0], shift[1]))
+    elif event.key == "r":
+        appStarted(self)
 
 def setPointerGoal(self, shift):
     for i in range(1, 4):
-        newRow, newCol = self.pointerRow + shift[0] * i, self.pointerCol + shift[1] * i
         if not isLegalPointerMove(self, (shift[0] * i,  shift[1] * i)):
             i -= 1
             break
@@ -141,7 +153,23 @@ def timerFired(self):
     movePointer(self)
     createBulletController(self)
     moveBullets(self)
-    
+    removeBullets(self)
+
+def removeBullets(self):
+    i = 0
+    while i < len(self.pointerBullets):
+        bullet = self.pointerBullets[i]
+        x, y = bullet.getPos()
+        row, col = getLCell(self, x, y)
+        if 0 <= row < self.lRows and 0 <= col < self.lCols:
+            if self.stage[row][col] != None:
+                self.pointerBullets.pop(i)
+            else:
+                i += 1
+        elif x < 0 or x >= self.width or y < 0 or y >= self.width:
+            self.pointerBullets.pop(i)
+        else:
+            i += 1
 
 def createBulletController(self):
     if self.firing:
@@ -220,8 +248,8 @@ def getLCellBounds(self, row, col):
 
 def getLCell(self, x, y):
     xShift, yShift = self.upperRightCorner
-    col = (x - xShift) // self.lSize
-    row = (y - yShift) // self.lSize
+    col = int((x - xShift) // self.lSize)
+    row = int((y - yShift) // self.lSize)
     return row, col
 
 def getSCellBounds(self, row, col):
