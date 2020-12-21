@@ -609,7 +609,7 @@ def moveEnemies(self):
 def checkGameOver(self):
     if len(self.enemies) == 0:
         resetApp(self)
-    if self.health <= 0:
+    if self.pointerHealth <= 0:
         self.gameLost = True
 
 def unshieldEnemies(self):
