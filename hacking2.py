@@ -244,11 +244,11 @@ class Core(Enemy):
 
 class Shooter(Enemy):
     #maximum health
-    maxHealth = 3
+    maxHealth = 2
     size = 20
     killerInstinct = 12 #stops moving at this distance. 
     tooFar = 40  #max range
-    bulletSpeed = 20
+    bulletSpeed = 8
 
     def __init__(self, row, col):
         super().__init__(row, col, Shooter.maxHealth)
@@ -264,6 +264,7 @@ class Shooter(Enemy):
         self.unUpdatedAngle = True
         self.fireRate = 20
         self.fireFrame = 0
+        self.agro = False
     
     #broken
     def pointInEnemy(self, app, xx, yy):
@@ -315,8 +316,10 @@ class Shooter(Enemy):
         pRow, pCol = app.pointerRow, app.pointerCol
         if distance(pRow, pCol, self.row, self.col) < Shooter.killerInstinct:
             return
-        elif distance(pRow, pCol, self.row, self.col) > Shooter.tooFar:
+        elif distance(pRow, pCol, self.row, self.col) > Shooter.tooFar and not self.agro:
             return
+        
+        self.agro = True
         self.moveFrame = (self.moveFrame + 1) % self.moveFrames
 
         if self.moveFrame == 0 and self.path != None and len(self.path) > 0:
@@ -404,6 +407,8 @@ def appStarted(self):
     self.sRows = self.lRows * self.lSize // self.sSize #
     self.sCols = self.lCols * self.lSize // self.sSize #
     self.numEnemies = 2
+
+    self.pointerHealth = 10
     resetApp(self)
 
 def resetApp(self):
@@ -572,6 +577,7 @@ def timerFired(self):
     moveBullets(self)
     removeBullets(self)
     checkBulletsInEnemy(self)
+    checkBulletsInPointer(self)
     removeEnemies(self)
     updateEnemyAngle(self)
     unshieldEnemies(self)
@@ -603,6 +609,8 @@ def moveEnemies(self):
 def checkGameOver(self):
     if len(self.enemies) == 0:
         resetApp(self)
+    if self.health <= 0:
+        self.gameLost = True
 
 def unshieldEnemies(self):
     if len(self.enemies) == 1:
@@ -635,6 +643,26 @@ def checkBulletsInEnemy(self):
                 self.pointerBullets.pop(i)
             else:
                 i += 1
+
+def checkBulletsInPointer(self):
+    #O(n) yay
+    i = 0
+    while i < len(self.enemyBullets):
+        bullet = self.enemyBullets[i]
+        x, y = bullet.getPos()
+        if pointInPointer(self, x, y):
+            self.pointerHealth -= 1
+            self.enemyBullets.pop(i)
+        else:
+            i += 1
+    print(self.pointerHealth)
+
+def pointInPointer(self, x, y):
+    hitbox = 13
+    x0, y0 = getPointerXY(self)
+    if distance(x, y, x0, y0) < hitbox:
+        return True
+    return False
 
 def removeBullets(self):
     i = 0
