@@ -1,15 +1,8 @@
 #hacking game v2
 
+#max feasible levels: 4. level 5 is rather difficult. 
+
 """
-Have a large grid system. this grid will contain stage elements and the border
-of the area.
-
-Have a small grid system that's like 5x5 pixels, The ai uses the smaller grid
-to pathfind around the map and towards the player
-
-Thus, the player and enemies will move around based on the small grid system
-The small grid system could have an attribute that's like "Oh, this is a wall"
-or something idk 
 
 """
 from cmu_112_graphics import *
@@ -248,7 +241,7 @@ class Core(Enemy):
     maxHealth = 3
     radius = 15
     bulletSpeed = 10
-    angleDx = math.pi/36  #higher denominator: slower rotation
+    angleDx = math.pi/44  #higher denominator: slower rotation
 
     def __init__(self, row, col):
         super().__init__(row, col, Core.maxHealth)
@@ -490,6 +483,7 @@ def appStarted(self):
     self.numEnemies = 2
 
     self.pointerHealth = 10
+    self.maxPointerHealth = 10
     resetApp(self)
 
 def resetApp(self):
@@ -544,9 +538,12 @@ def resetApp(self):
 def generateSimpleMaze(self, matrix):
     rows = len(matrix)
     cols = len(matrix[0])
+    #chance to spawn a new block
+    chance = 3 + self.numEnemies
+    print(f"chance: {1/(chance-1)}")
     for row in range(1, rows - 1):
         for col in range(1, cols - 1):
-            choice = random.randint(0,5)
+            choice = random.randint(0, chance)
             if rows//2-1 <= row <= rows//2 and cols//2-1 <= col <= cols//2:
                 pass
             elif choice == 0:
@@ -888,6 +885,7 @@ def redrawAll(self, canvas):
     drawBackground(self, canvas)
     drawLGrid(self, canvas)
     drawEnemies(self, canvas)
+    drawPointerHealth(self, canvas)
     if not self.gameLost:
         drawPointer(self, canvas)
         drawPointerBullets(self, canvas)
@@ -912,6 +910,23 @@ def drawGameLost(self, canvas):
 def rgbString(r, g, b):
     return f'#{r:02x}{g:02x}{b:02x}'
 
+def drawPointerHealth(self, canvas):
+    yPos = 30
+    xPos = 60
+    length = 150
+
+    maxHealth = self.maxPointerHealth
+    healthColor = rgbString(205, 200, 176)
+    beautifulRed = rgbString(205, 102, 77)
+
+    canvas.create_line(xPos, yPos, xPos + length, yPos, fill = beautifulRed, width = 9)
+    currHealth = (self.pointerHealth/maxHealth) * length
+
+    if currHealth >= 0:
+        canvas.create_line(xPos, yPos, xPos + currHealth, yPos, fill = healthColor, width = 9)
+    
+    #line above everything:
+    canvas.create_line(xPos, yPos + 10, xPos + length, yPos + 10, fill= healthColor, width = 2)
 
 def drawEnemies(self, canvas):
     for enemy in self.enemies:
