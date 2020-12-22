@@ -185,6 +185,10 @@ class Enemy(object):
         self.row = row
         self.col = col
         self.health = health
+
+        self.unUpdatedAngle = True
+        self.agro = False
+        self.angle = math.pi/2
     
     def draw(self, app, canvas):
         x0, y0, x1, y1 = getSCellBounds(app, self.row, self.col)
@@ -197,8 +201,42 @@ class Enemy(object):
         return False 
     
     def updateAngle(self, app):
-        pass
+        pRow, pCol = app.pointerRow, app.pointerCol
+        if distance(pRow, pCol, self.row, self.col) > Shooter.tooFar and not self.unUpdatedAngle and not self.agro:
+            return
+        self.unUpdatedAngle = False
+        x0, y0, x1, y1  = getSCellBounds(app, self.row, self.col)
+        x, y = x0 + app.sSize//2, y0 + app.sSize//2
+        x0, y0 = getPointerXY(app)
+
+        yDif = y0 - y
+        xDif = x - x0
+        try:
+            newAngle = math.atan(yDif/xDif)
+        except:
+            newAngle = math.atan(-yDif/.01)
+        if xDif > 0:
+            newAngle = newAngle + math.pi
+        self.angle = newAngle 
     
+    def pathFind(self, app):
+        #def pathFind(self, app):
+        if time.time() - self.lastSearch > self.searchTime:
+            self.found = False
+            self.lastSearch = time.time()
+        if not self.found:
+            #variable (changes every run)
+            start = app.smallBoxGrid[self.row][self.col]
+            start.makeStart()
+            end = app.smallBoxGrid[app.pointerRow][app.pointerCol]
+            end.makeEnd()
+            app.reconstructedPath = []
+            if not aStar(app, start, end):
+                print("didn't work ")
+            self.path = (app.reconstructedPath)
+            self.path.reverse()
+            self.found = True
+
     def subtractHealth(self):
         self.health -= 1
     
@@ -209,10 +247,25 @@ class Core(Enemy):
     #maximum health 
     maxHealth = 3
     radius = 15
+    bulletSpeed = 10
+    angleDx = math.pi/36  #higher denominator: slower rotation
 
     def __init__(self, row, col):
         super().__init__(row, col, Core.maxHealth)
         self.shielded = True
+
+        self.path = None
+        self.found = False
+
+        self.lastSearch = 0
+        self.searchTime = 2
+        self.moveFrame = 0
+        self.moveFrames = 9  #higher is slower
+
+        self.unUpdatedAngle = True
+        self.fireRate = 5   #higher is slower. 
+        self.fireFrame = 0
+        self.agro = False
     
     def draw(self, app, canvas):
         x0, y0, x1, y1  = getSCellBounds(app, self.row, self.col)
@@ -241,44 +294,9 @@ class Core(Enemy):
         else:
             self.health -= 1
 
-
-class Shooter(Enemy):
-    #maximum health
-    maxHealth = 2
-    size = 20
-    killerInstinct = 12 #stops moving at this distance. 
-    tooFar = 40  #max range
-    bulletSpeed = 8
-
-    def __init__(self, row, col):
-        super().__init__(row, col, Shooter.maxHealth)
-        self.angle = math.pi / 2
-        self.path = None
-        self.found = False
-
-        self.lastSearch = 0
-        self.searchTime = 1.5
-        self.moveFrame = 0
-        self.moveFrames = 4
-        
-        self.unUpdatedAngle = True
-        self.fireRate = 20
-        self.fireFrame = 0
-        self.agro = False
-    
-    #broken
-    def pointInEnemy(self, app, xx, yy):
-        x0, y0, x1, y1  = getSCellBounds(app, self.row, self.col)
-        x, y = x0 + app.sSize//2, y0 + app.sSize//2
-        r = Shooter.size
-        r1 = r * .8
-        if distance(x, y, xx, yy) < r1:
-            return True
-        return False
-
     def updateAngle(self, app):
         pRow, pCol = app.pointerRow, app.pointerCol
-        if distance(pRow, pCol, self.row, self.col) > Shooter.tooFar and not self.unUpdatedAngle:
+        if not self.unUpdatedAngle:
             return
         self.unUpdatedAngle = False
         x0, y0, x1, y1  = getSCellBounds(app, self.row, self.col)
@@ -295,23 +313,7 @@ class Shooter(Enemy):
             newAngle = newAngle + math.pi
         self.angle = newAngle 
 
-    def pathFind(self, app):
-        if time.time() - self.lastSearch > self.searchTime:
-            self.found = False
-            self.lastSearch = time.time()
-        if not self.found:
-            #variable (changes every run)
-            start = app.smallBoxGrid[self.row][self.col]
-            start.makeStart()
-            end = app.smallBoxGrid[app.pointerRow][app.pointerCol]
-            end.makeEnd()
-            app.reconstructedPath = []
-            if not aStar(app, start, end):
-                print("didn't work ")
-            self.path = (app.reconstructedPath)
-            self.path.reverse()
-            self.found = True  #TEMPORARYR SO U>LUTMION> !
-    
+    #TODO: CHANGE THE KILLERiNSTICT AND TOOfAR VARIABLES TO SOMETHING MORE FAIR.
     def move(self, app):
         pRow, pCol = app.pointerRow, app.pointerCol
         if distance(pRow, pCol, self.row, self.col) < Shooter.killerInstinct:
@@ -330,7 +332,85 @@ class Shooter(Enemy):
 
     def fire(self, app):
         pRow, pCol = app.pointerRow, app.pointerCol
-        if distance(pRow, pCol, self.row, self.col) < Shooter.tooFar:
+        if distance(pRow, pCol, self.row, self.col) < Shooter.tooFar or self.agro:
+            #can fire
+            self.fireFrame = (self.fireFrame+1) % self.fireRate
+            if self.fireFrame == 0:
+                Core.createBullets(self, app)
+                self.angle += Core.angleDx
+            return
+
+    def createBullets(self, app):
+        x0, y0, x1, y1 = getSCellBounds(app, self.row, self.col)
+        x = x0 + app.sSize//2
+        y = y0 + app.sSize//2
+
+        angle = self.angle
+        r2 = Core.radius
+
+        dAngles = [0, -math.pi/4, math.pi/4]
+        if app.numEnemies >= 4:
+            dAngles = [0, -math.pi/4, math.pi/4, math.pi/2, -math.pi/2]
+        for dTheta in dAngles:
+            newAngle = angle + dTheta
+            dirX = x + r2 * math.cos(newAngle)
+            dirY = y - r2 * math.sin(newAngle)
+            dx = Core.bulletSpeed * math.cos(newAngle)
+            dy = Core.bulletSpeed * math.sin(newAngle)
+            bullet = PointerBullet(dirX, dirY, dx, dy, newAngle)
+            app.enemyBullets.append(bullet)
+
+class Shooter(Enemy):
+    #maximum health
+    maxHealth = 2
+    size = 20
+    killerInstinct = 12 #stops moving at this distance. 
+    tooFar = 40  #max range
+    bulletSpeed = 8
+
+    def __init__(self, row, col):
+        super().__init__(row, col, Shooter.maxHealth)
+        self.path = None
+        self.found = False
+
+        self.lastSearch = 0
+        self.searchTime = 1.5
+        self.moveFrame = 0
+        self.moveFrames = 4
+        
+        self.fireRate = 20
+        self.fireFrame = 0
+    
+    #broken
+    def pointInEnemy(self, app, xx, yy):
+        x0, y0, x1, y1  = getSCellBounds(app, self.row, self.col)
+        x, y = x0 + app.sSize//2, y0 + app.sSize//2
+        r = Shooter.size
+        r1 = r * .8
+        if distance(x, y, xx, yy) < r1:
+            return True
+        return False
+
+    def move(self, app):
+        pRow, pCol = app.pointerRow, app.pointerCol
+        if distance(pRow, pCol, self.row, self.col) < Shooter.killerInstinct:
+            return
+        elif distance(pRow, pCol, self.row, self.col) > Shooter.tooFar and not self.agro:
+            return
+        
+        self.agro = True
+        self.moveFrame = (self.moveFrame + 1) % self.moveFrames
+
+        if self.moveFrame == 0 and self.path != None and len(self.path) > 0:
+            smallBox = self.path[0]
+            newRow, newCol = smallBox.getPos()
+            self.path.pop(0)
+            self.row, self.col = newRow, newCol
+
+
+    def fire(self, app):
+        pRow, pCol = app.pointerRow, app.pointerCol
+        if distance(pRow, pCol, self.row, self.col) < Shooter.tooFar or self.agro:
             #can fire
             self.fireFrame = (self.fireFrame+1) % self.fireRate
             if self.fireFrame == 0:
@@ -397,6 +477,7 @@ def distance(x0, y0, x1, y1):
 def appStarted(self):
     self.timerDelay = 20
     self.debug = False
+    self.gameLost = False
     #large grid:
     self.lRows = 10
     self.lCols = 10
@@ -466,7 +547,9 @@ def generateSimpleMaze(self, matrix):
     for row in range(1, rows - 1):
         for col in range(1, cols - 1):
             choice = random.randint(0,5)
-            if choice == 0:
+            if rows//2-1 <= row <= rows//2 and cols//2-1 <= col <= cols//2:
+                pass
+            elif choice == 0:
                 matrix[row][col] = LargeBox(row, col)
     return matrix
 
@@ -520,6 +603,8 @@ def mouseReleased(self, event):
     self.firing = False
 
 def keyPressed(self, event):
+    if self.gameLost:
+        appStarted(self)
     if event.key in "wasd":
         if event.key == "a":
             shift = (0, -1)
@@ -598,12 +683,12 @@ def enemyBulletController(self):
 
 def pathFind(self):
     for enemy in self.enemies:
-        if type(enemy) == Shooter:
+        #if type(enemy) == Shooter:
             enemy.pathFind(self)
 
 def moveEnemies(self):
     for enemy in self.enemies:
-        if type(enemy) == Shooter:
+        #if type(enemy) == Shooter:
             enemy.move(self)
 
 def checkGameOver(self):
@@ -655,7 +740,6 @@ def checkBulletsInPointer(self):
             self.enemyBullets.pop(i)
         else:
             i += 1
-    print(self.pointerHealth)
 
 def pointInPointer(self, x, y):
     hitbox = 13
@@ -689,7 +773,9 @@ def removeBullets(self):
                 self.enemyBullets.pop(i)
             else:
                 i += 1
-        elif x < 0 or x >= self.width or y < 0 or y >= self.width:
+        #elif x < 0 or x >= self.width or y < 0 or y >= self.width:
+        #    self.enemyBullets.pop(i)
+        elif row < 0 or row >= self.lRows or col < 0 or col >= self.lCols:
             self.enemyBullets.pop(i)
         else:
             i += 1
@@ -801,13 +887,26 @@ def getSCell(self, x, y):
 def redrawAll(self, canvas):
     drawBackground(self, canvas)
     drawLGrid(self, canvas)
-    drawPointer(self, canvas)
-    drawPointerBullets(self, canvas)
     drawEnemies(self, canvas)
-    drawEnemyBullets(self, canvas)
+    if not self.gameLost:
+        drawPointer(self, canvas)
+        drawPointerBullets(self, canvas)
+        drawEnemyBullets(self, canvas)
+    else:
+        drawGameLost(self, canvas)
     #drawSGrid(self, canvas)
     if self.debug:
         drawSmallGrid(self, canvas)
+
+
+def drawGameLost(self, canvas):
+    #rectangle covering screen
+    canvas.create_rectangle(0, self.height/3, self.width, self.height*2/3,
+                            fill = "grey", width = 0)
+    canvas.create_text(self.width//2, self.height//2 - 25, 
+                            text = "Hacking Failed", font = "arial 24 bold", fill = "white")
+    canvas.create_text(self.width//2, self.height//2 + 25, text= "Press any key to continue",
+                        font = "arial 14 bold", fill = "white")
 
 #code from https://www.cs.cmu.edu/~112/notes/notes-graphics.html#customColors
 def rgbString(r, g, b):
