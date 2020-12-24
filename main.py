@@ -30,7 +30,8 @@ pygame.mixer.init()
     
 class MyApp(App):
     def appStarted(self):
-        self.timerDelay = 50
+        self.defaultTimerDelay = 70
+        self.timerDelay = self.defaultTimerDelay
         pygame.mixer.music.load("audio/cityRuins.mp3")
         pygame.mixer.music.play(-1) #loop forever. 
         
@@ -163,7 +164,7 @@ class MyApp(App):
                 else:
                     self.mcHealth -= 20
                 self.hacking = False
-                self.timerDelay = 50
+                self.timerDelay = self.defaultTimerDelay
                 self.hackingAnimationFrames = 4
                 #put the skill on cooldown
                 self.lastHack = time.time()
