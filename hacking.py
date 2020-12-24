@@ -219,13 +219,13 @@ def keyPressed(app, event):
 
 def mouseMoved(self, event):
     updatePointerAngle(self, event.x, event.y)
-    
+
 def mouseDragged(self, event):
     updatePointerAngle(self, event.x, event.y)
 
 def updatePointerAngle(self, ex, ey):
     #calculate new angle
-    x, y = getPointerXY(self)
+    x, y = self.pointerX, self.pointerY
 
     yDif = ey - y
     xDif = x - ex
@@ -235,7 +235,7 @@ def updatePointerAngle(self, ex, ey):
         newAngle = math.atan(-yDif/.01)
     if xDif > 0:
         newAngle = newAngle + math.pi
-    self.pointerAngle = newAngle 
+    self.pointerA = newAngle 
 
 def timerFired(app):
     if app.hacking and not app.hackingGameOver:
