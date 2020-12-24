@@ -53,7 +53,7 @@ class MyApp(App):
         self.gameOver = False
         self.bossKilled = False
 
-        self.hackRange = self.width//2
+        self.hackRange = self.width // 2
         self.hacking = False
         self.hackedEnemy = None
         self.hackingAnimationFrames = 4
@@ -115,6 +115,10 @@ class MyApp(App):
             splashScreen.mouseMoved(self, event)
         elif self.hacking and not self.hackingAnimationFrames > 0:
             hacking.mouseMoved(self, event)
+    
+    def mouseDragged(self, event):
+        if self.hacking and not self.hackingAnimationFrames > 0:
+            hacking.mouseDragged(self, event)
 
     ###########################################################################
     def timerFired(self):
