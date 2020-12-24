@@ -217,18 +217,25 @@ def keyPressed(app, event):
         elif event.key == 'r':
             resetHackingGame(app)
 
-def mouseMoved(app, event):
-    if app.hacking and not app.hackingGameStarted:
-        #calculate new angle
-        yDif = event.y - app.pointerY
-        xDif = app.pointerX - event.x
-        try:
-            newAngle = math.atan(yDif/xDif)
-        except:
-            newAngle = math.atan(-yDif/.01)
-        if xDif > 0:
-            newAngle = newAngle + math.pi
-        app.pointerA = newAngle 
+def mouseMoved(self, event):
+    updatePointerAngle(self, event.x, event.y)
+    
+def mouseDragged(self, event):
+    updatePointerAngle(self, event.x, event.y)
+
+def updatePointerAngle(self, ex, ey):
+    #calculate new angle
+    x, y = getPointerXY(self)
+
+    yDif = ey - y
+    xDif = x - ex
+    try:
+        newAngle = math.atan(yDif/xDif)
+    except:
+        newAngle = math.atan(-yDif/.01)
+    if xDif > 0:
+        newAngle = newAngle + math.pi
+    self.pointerAngle = newAngle 
 
 def timerFired(app):
     if app.hacking and not app.hackingGameOver:
