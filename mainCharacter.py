@@ -439,9 +439,17 @@ def checkMeleeInMC(self, x, y):
     if x10 <= x <= x11 and y11 <= y <= y10:
         self.mcHealth -= 2
 
+def getCachedPhotoImage(self, image):
+    # stores a cached version of the PhotoImage in the PIL/Pillow image
+    if ('cachedPhotoImage' not in image.__dict__):
+        image.cachedPhotoImage = ImageTk.PhotoImage(image)
+    return image.cachedPhotoImage
+
 def drawMC(self, canvas):
     #Draws the main character
-    canvas.create_image(self.mcX, self.mcY, image=ImageTk.PhotoImage(self.mcFrame), anchor = "s")
+    photoImage = getCachedPhotoImage(self, self.mcFrame)
+    canvas.create_image(self.mcX, self.mcY, image=photoImage, anchor = "s")
+    #canvas.create_image(self.mcX, self.mcY, image=ImageTk.PhotoImage(self.mcFrame), anchor = "s")
     #hitbox
     if self.debug:
         xSize, ySize = self.mcSize
@@ -495,7 +503,6 @@ def drawCooldowns(self, canvas):
     #draw's "E"
     x2 = self.width - boxWidth * 3
     x3 = self.width - boxWidth * 4
-    
     
     canvas.create_oval(x2, y0, x3, y1, fill=color, width = 3, outline = darkGrey)
     canvas.create_text(x3 + boxWidth//2, y1 + boxWidth//2, text="E", font = 

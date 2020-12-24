@@ -171,12 +171,29 @@ def blocked(self, angle, x0, y0, direction):
 
     return False
 
+def inScreen(app, coord1, coord2):
+    x0, y0 = coord1
+    x1, y1 = coord2
+    if (x0 < 0 and x1 < 0) or (x0 >= app.width and x1 >= app.width):
+        return False
+    return True
 
+def getCachedPhotoImage(self, image):
+    # stores a cached version of the PhotoImage in the PIL/Pillow image
+    if ('cachedPhotoImage' not in image.__dict__):
+        image.cachedPhotoImage = ImageTk.PhotoImage(image)
+    return image.cachedPhotoImage
+
+def drawBackgroundImage(self, canvas):
+    photoImage = getCachedPhotoImage(self, (self.environment))
+    canvas.create_image(self.width/2, self.height/2, image=photoImage)
 
 def drawBackground(self, canvas, defaultPos, camPos):
     shift = camPos - defaultPos
 
-    canvas.create_image(self.width/2, self.height/2, image=ImageTk.PhotoImage(self.environment))
+    # Draw background:
+    drawBackgroundImage(self, canvas)
+
     for i in range(len(self.platforms)):
         platformHeight = self.platformHeight
         coord1 = self.platforms[i][0]
@@ -186,20 +203,20 @@ def drawBackground(self, canvas, defaultPos, camPos):
         x, y = coord2
         x -= shift
         coord2 = (x, y)
-        canvas.create_line(coord1, coord2)
+        #canvas.create_line(coord1, coord2) (decrease lag)
+        if inScreen(self, coord1, coord2):
+            canvas.create_rectangle(coord1, x, y + platformHeight, fill = 'green')
 
-        canvas.create_rectangle(coord1, x, y + platformHeight, fill = 'green')
-
-        x1 = x + platformHeight * math.cos(math.pi/3)
-        y1 = y - platformHeight * math.sin(math.pi/3)
-        canvas.create_polygon(x, y, x1, y1, x1, y1+platformHeight, x, 
-                              y+platformHeight, fill='light green', 
-                              outline='black')
-        x10, y10 = coord1
-        x11 = x10 + platformHeight * math.cos(math.pi/3)
-        y11 = y10 - platformHeight * math.sin(math.pi/3)
-        canvas.create_polygon(x, y, x1, y1, x11, y11, x10, y10, 
-                              fill = "light green", outline="black")
+            x1 = x + platformHeight * math.cos(math.pi/3)
+            y1 = y - platformHeight * math.sin(math.pi/3)
+            canvas.create_polygon(x, y, x1, y1, x1, y1+platformHeight, x, 
+                                y+platformHeight, fill='light green', 
+                                outline='black')
+            x10, y10 = coord1
+            x11 = x10 + platformHeight * math.cos(math.pi/3)
+            y11 = y10 - platformHeight * math.sin(math.pi/3)
+            canvas.create_polygon(x, y, x1, y1, x11, y11, x10, y10, 
+                                fill = "light green", outline="black")
 
     darkYellow = rgbString(204,204,0)
     lightYellow = rgbString(255,255,153)
@@ -211,20 +228,20 @@ def drawBackground(self, canvas, defaultPos, camPos):
         x, y = coord2
         x -= shift
         coord2 = (x, y)
-        canvas.create_line(coord1, coord2)
 
-        canvas.create_rectangle(coord1, x, y + platformHeight, fill = darkYellow)
+        if inScreen(self, coord1, coord2):
+            canvas.create_rectangle(coord1, x, y + platformHeight, fill = darkYellow)
 
-        x1 = x + platformHeight * math.cos(math.pi/3)
-        y1 = y - platformHeight * math.sin(math.pi/3)
-        canvas.create_polygon(x, y, x1, y1, x1, y1+platformHeight, x, 
-                              y+platformHeight, fill=lightYellow, 
-                              outline='black')
-        x10, y10 = coord1
-        x11 = x10 + platformHeight * math.cos(math.pi/3)
-        y11 = y10 - platformHeight * math.sin(math.pi/3)
-        canvas.create_polygon(x, y, x1, y1, x11, y11, x10, y10, 
-                              fill = lightYellow, outline="black")
+            x1 = x + platformHeight * math.cos(math.pi/3)
+            y1 = y - platformHeight * math.sin(math.pi/3)
+            canvas.create_polygon(x, y, x1, y1, x1, y1+platformHeight, x, 
+                                y+platformHeight, fill=lightYellow, 
+                                outline='black')
+            x10, y10 = coord1
+            x11 = x10 + platformHeight * math.cos(math.pi/3)
+            y11 = y10 - platformHeight * math.sin(math.pi/3)
+            canvas.create_polygon(x, y, x1, y1, x11, y11, x10, y10, 
+                                fill = lightYellow, outline="black")
 
 #code from https://www.cs.cmu.edu/~112/notes/notes-graphics.html#customColors
 def rgbString(r, g, b):

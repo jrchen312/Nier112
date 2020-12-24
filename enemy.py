@@ -595,13 +595,25 @@ def inHackRange(self, range):
     return None
 
 
+def getCachedPhotoImage(self, image):
+    # stores a cached version of the PhotoImage in the PIL/Pillow image
+    if ('cachedPhotoImage' not in image.__dict__):
+        image.cachedPhotoImage = ImageTk.PhotoImage(image)
+    return image.cachedPhotoImage
+
+def enemOnScreen(self, enemy):
+    if -240 < enemy.x < self.width + 250:
+        return True
+    return False
 
 def drawEnemies(self, canvas):
 
     for enem in self.enemies:
         xSize, ySize = enem.hitbox
-        if enem.frame != "":
-            canvas.create_image(enem.x, enem.y, image=ImageTk.PhotoImage(enem.frame), anchor = "s")
+        if enem.frame != "" and enemOnScreen(self, enem):
+            photoImage = getCachedPhotoImage(self, enem.frame)
+            canvas.create_image(enem.x, enem.y, image=photoImage, anchor = "s")
+            #canvas.create_image(enem.x, enem.y, image=ImageTk.PhotoImage(enem.frame), anchor = "s")
         
         if enem.health != enem.maxHealth:
             green = enem.getHealthBar()

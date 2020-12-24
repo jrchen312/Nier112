@@ -247,7 +247,7 @@ class Core(Enemy):
         super().__init__(row, col, Core.maxHealth)
         self.shielded = True
 
-        self.path = None
+        self.path = []
         self.found = False
 
         self.lastSearch = 0
@@ -363,7 +363,7 @@ class Shooter(Enemy):
 
     def __init__(self, row, col):
         super().__init__(row, col, Shooter.maxHealth)
-        self.path = None
+        self.path = []
         self.found = False
 
         self.lastSearch = 0
