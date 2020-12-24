@@ -166,7 +166,7 @@ class MyApp(App):
                     enem.health -= 25
                 #lost 
                 else:
-                    self.mcHealth -= 20
+                    self.mcHealth -= 20 #punishment
                 self.hacking = False
                 self.timerDelay = self.defaultTimerDelay
                 self.hackingAnimationFrames = 4
