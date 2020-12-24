@@ -515,8 +515,8 @@ def resetApp(self):
     """
 
     #pointer
-    self.pointerRow = 0
-    self.pointerCol = 0
+    self.pointerRow = int(self.sRows - (self.lSize/self.sSize) / 2)
+    self.pointerCol = self.sCols // 2
     self.pointerAngle = math.pi/2
     self.pointerGoal = None
 
@@ -580,11 +580,15 @@ def simpleGenerateEnemy(self, num):
 
 
 def notInPiece(self, row, col):
-    if 0 <= row < self.sRows and 0 <= col <= self.sCols:
+    if 0 <= row < self.sRows and 0 <= col < self.sCols:
         x0, y0, x1, y1 = getSCellBounds(self, row, col)
         x0, y0 = x0 + self.sSize//2, y0 + self.sSize//2
         lRow, lCol = getLCell(self, x0, y0)
         if 0 <= lRow < self.lRows and 0 <= lCol < self.lCols and self.stage[lRow][lCol] == None:
+
+            #not related to "notInPiece", but checks if enemy is too close to the enemy.
+            if distance(row, col, self.pointerRow, self.pointerCol) < Shooter.killerInstinct * 2:
+                return False
             return True
 
     return False
