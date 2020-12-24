@@ -239,7 +239,7 @@ class Enemy(object):
 class Core(Enemy):
     #maximum health 
     maxHealth = 3
-    radius = 15
+    radius = 23
     bulletSpeed = 10
     angleDx = math.pi/44  #higher denominator: slower rotation
 
@@ -467,7 +467,7 @@ class Shooter(Enemy):
 def distance(x0, y0, x1, y1):
     return ((x0-x1)**2 + (y0-y1)**2)**0.5
 
-def appStarted(self):
+def appStarted(self, hard = True):
     self.timerDelay = 20
     self.debug = False
     self.gameLost = False
@@ -480,7 +480,13 @@ def appStarted(self):
     self.sSize = 10
     self.sRows = self.lRows * self.lSize // self.sSize #
     self.sCols = self.lCols * self.lSize // self.sSize #
-    self.numEnemies = 2
+
+    if hard:
+        self.numEnemies = 8
+        self.boxRate = 20
+    else:
+        self.numEnemies = 2
+        self.boxRate = 3 + self.numEnemies
 
     self.pointerHealth = 10
     self.maxPointerHealth = 10
@@ -539,7 +545,7 @@ def generateSimpleMaze(self, matrix):
     rows = len(matrix)
     cols = len(matrix[0])
     #chance to spawn a new block
-    chance = 3 + self.numEnemies
+    chance = self.boxRate
     print(f"chance: {1/(chance-1)}")
     for row in range(1, rows - 1):
         for col in range(1, cols - 1):
@@ -569,7 +575,6 @@ def simpleGenerateEnemy(self, num):
     cRow, cCol = self.sRows // 2, self.sCols // 2 
     self.enemies.append(Core(cRow, cCol))
 
-    
     for i in range(num):
         row, col = -1, -1
         while not notInPiece(self, row, col):
@@ -981,7 +986,6 @@ def drawSmallGrid(self, canvas):
                 canvas.create_rectangle(x0, y0, x1, y1, fill = 'red')
     """
     for enemy in self.enemies:
-        if type(enemy) == Shooter:
             boxes = enemy.path
             for box in enemy.path:
                 x0, y0, x1, y1 = getSCellBounds(self, box.row, box.col)
