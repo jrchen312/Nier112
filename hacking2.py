@@ -357,8 +357,8 @@ class Core(Enemy):
             app.enemyBullets.append(bullet)
 
 class Cylinder(Enemy):
-    maxHealth = 4
-    size = 11
+    maxHealth = 3
+    size = 18
     tooFar = 50
     bulletSpeed = 20
 
@@ -665,6 +665,13 @@ def simpleGenerateEnemy(self, num):
             #generate new row, col
             row, col = random.randint(0, self.sRows), random.randint(0, self.sCols)
         #spawn new enemy
+        self.enemies.append(Shooter(row, col))
+    
+    cylinders = 1 if num < 5 else 2
+    for i in range(cylinders):
+        row, col = -1, -1
+        while not notInPiece(self, row, col):
+            row, col = random.randint(0, self.sRows), random.randint(0, self.sCols)
         self.enemies.append(Cylinder(row, col))
 
 
