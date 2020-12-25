@@ -1,6 +1,9 @@
 #hacking game v2
 
-#max feasible levels: 4. level 5 is rather difficult. 
+#The complexity presented matches that of a term project for 15-112.
+#Though there may need to be a few more features to flush it out.
+#   such as more mobs! or something idk
+
 
 """
 
@@ -353,6 +356,88 @@ class Core(Enemy):
             bullet = PointerBullet(dirX, dirY, dx, dy, newAngle)
             app.enemyBullets.append(bullet)
 
+class Cylinder(Enemy):
+    maxHealth = 4
+    size = 11
+    tooFar = 50
+    bulletSpeed = 20
+
+    def __init__(self, row, col):
+        super().__init__(row, col, Cylinder.maxHealth)
+        self.path = []
+        self.found = False
+
+        self.fireRate = 30
+        self.fireFrame = 0
+
+    def pointInEnemy(self, app, xx, yy):
+        x0, y0, x1, y1  = getSCellBounds(app, self.row, self.col)
+        x, y = x0 + app.sSize//2, y0 + app.sSize//2
+        r1 = Cylinder.size
+        if distance(x, y, xx, yy) < r1:
+            return True
+        return False
+    
+    def draw(self, app, canvas):
+        x0, y0, x1, y1  = getSCellBounds(app, self.row, self.col)
+        x, y = x0 + app.sSize//2, y0 + app.sSize//2
+        r = Cylinder.size
+        canvas.create_oval(x-r, y-r, x+r, y+r, fill = "black", width = 0)
+    
+    #does not move
+    def move(self, app):
+        pass
+
+    #and thus does not need to have any pathfinding or anything xD
+    def pathFind(self, app):
+        pass
+
+    def fire(self, app):
+        pRow, pCol = app.pointerRow, app.pointerCol
+        if distance(pRow, pCol, self.row, self.col) < Cylinder.tooFar:
+            #can fire
+            self.fireFrame = (self.fireFrame+1) % self.fireRate
+            if self.fireFrame == 0:
+                Cylinder.createBullets(self, app)
+
+    def createBullets(self, app):
+        x0, y0, x1, y1 = getSCellBounds(app, self.row, self.col)
+        x = x0 + app.sSize//2
+        y = y0 + app.sSize//2
+
+        angle = self.angle
+        r2 = Cylinder.size
+    
+        dThetas = [0, math.pi/2, math.pi, 3*math.pi/2]
+
+        for dTheta in dThetas:
+            newAngle = angle + dTheta
+            dirX = x + r2 * math.cos(newAngle)
+            dirY = y - r2 * math.sin(newAngle)
+            dx = Cylinder.bulletSpeed * math.cos(newAngle)
+            dy = Cylinder.bulletSpeed * math.sin(newAngle)
+            bullet = PointerBullet(dirX, dirY, dx, dy, newAngle)
+            app.enemyBullets.append(bullet)
+
+    def updateAngle(self, app):
+        #this can be tweaked a lot for balance. 
+        if self.fireFrame == self.fireRate - 5:
+
+            pRow, pCol = app.pointerRow, app.pointerCol
+            x0, y0, x1, y1  = getSCellBounds(app, self.row, self.col)
+            x, y = x0 + app.sSize//2, y0 + app.sSize//2
+            x0, y0 = getPointerXY(app)
+
+            yDif = y0 - y
+            xDif = x - x0
+            try:
+                newAngle = math.atan(yDif/xDif)
+            except:
+                newAngle = math.atan(-yDif/.01)
+            if xDif > 0:
+                newAngle = newAngle + math.pi
+            self.angle = newAngle 
+
 class Shooter(Enemy):
     #maximum health
     maxHealth = 2
@@ -374,7 +459,7 @@ class Shooter(Enemy):
         self.fireRate = 20
         self.fireFrame = 0
     
-    #broken
+    #Checks if a X (xx) and Y (yy) are in the shooter or not. 
     def pointInEnemy(self, app, xx, yy):
         x0, y0, x1, y1  = getSCellBounds(app, self.row, self.col)
         x, y = x0 + app.sSize//2, y0 + app.sSize//2
@@ -408,7 +493,6 @@ class Shooter(Enemy):
             self.fireFrame = (self.fireFrame+1) % self.fireRate
             if self.fireFrame == 0:
                 Shooter.createBullet(self, app)
-            return
 
     def createBullet(self, app):
         x0, y0, x1, y1 = getSCellBounds(app, self.row, self.col)
@@ -467,7 +551,7 @@ class Shooter(Enemy):
 def distance(x0, y0, x1, y1):
     return ((x0-x1)**2 + (y0-y1)**2)**0.5
 
-def appStarted(self, hard = True):
+def appStarted(self, hard = False):
     self.timerDelay = 20
     self.debug = False
     self.gameLost = False
@@ -581,7 +665,7 @@ def simpleGenerateEnemy(self, num):
             #generate new row, col
             row, col = random.randint(0, self.sRows), random.randint(0, self.sCols)
         #spawn new enemy
-        self.enemies.append(Shooter(row, col))
+        self.enemies.append(Cylinder(row, col))
 
 
 def notInPiece(self, row, col):
