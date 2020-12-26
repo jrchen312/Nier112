@@ -185,6 +185,10 @@ class Enemy(object):
         self.unUpdatedAngle = True
         self.agro = False
         self.angle = math.pi/2
+
+        self.justHit = False
+        self.justHitFrame = 0
+        self.justHitFrames = 2
     
     def draw(self, app, canvas):
         x0, y0, x1, y1 = getSCellBounds(app, self.row, self.col)
@@ -235,7 +239,15 @@ class Enemy(object):
 
     def subtractHealth(self):
         self.health -= 1
+        self.justHit = True
+        self.justHitFrame = self.justHitFrames
     
+    def checkJustHit(self):
+        if self.justHit:
+            self.justHitFrame -= 1
+            if self.justHitFrame < 0:
+                self.justHit = False
+
     def fire(self, app):
         pass
 
@@ -267,7 +279,10 @@ class Core(Enemy):
         x0, y0, x1, y1  = getSCellBounds(app, self.row, self.col)
         x, y = x0 + app.sSize//2, y0 + app.sSize//2
         r = Core.radius
-        canvas.create_oval(x-r, y-r, x+r, y+r, fill = "grey", width = 0)
+        whiteBox = "grey"
+        blackBox = rgbString(58, 56, 50)
+        color = whiteBox if self.justHit else blackBox
+        canvas.create_oval(x-r, y-r, x+r, y+r, fill = color, width = 0)
 
         if self.shielded:
             r += 4
@@ -361,19 +376,38 @@ class Cylinder(Enemy):
     size = 18
     tooFar = 50
     bulletSpeed = 20
+    fireRate = 17
+    shieldSize = [-math.pi/5, math.pi/5]
 
     def __init__(self, row, col):
         super().__init__(row, col, Cylinder.maxHealth)
         self.path = []
         self.found = False
 
-        self.fireRate = 30
+        self.fireRate = Cylinder.fireRate
         self.fireFrame = 0
+
+        self.angles = []   # last in first out system for keeping track of the number of angles
+        self.angleNum = 40   # use the angle n frames measured ago. 
+
+        self.shielded = True
 
     def pointInEnemy(self, app, xx, yy):
         x0, y0, x1, y1  = getSCellBounds(app, self.row, self.col)
         x, y = x0 + app.sSize//2, y0 + app.sSize//2
         r1 = Cylinder.size
+
+        if self.shielded:
+            try:
+                theta = self.angles[0]
+            except:
+                theta = 3 * math.pi/2
+            r10 = app.bulletSpeed/2 + 5
+            x10 = x + r1 * math.cos(theta)
+            y10 = y - r1 * math.sin(theta)
+            if distance(xx, yy, x10, y10) < r10:
+                return None
+
         if distance(x, y, xx, yy) < r1:
             return True
         return False
@@ -382,8 +416,69 @@ class Cylinder(Enemy):
         x0, y0, x1, y1  = getSCellBounds(app, self.row, self.col)
         x, y = x0 + app.sSize//2, y0 + app.sSize//2
         r = Cylinder.size
-        canvas.create_oval(x-r, y-r, x+r, y+r, fill = "black", width = 0)
-    
+        whiteBox = rgbString(223, 217, 205)
+        blackBox = rgbString(58, 56, 50)
+        color = whiteBox if self.justHit else blackBox
+        canvas.create_oval(x-r, y-r, x+r, y+r, fill = color, width = 0)
+
+        #draw a shield thing if we are shielded 
+        if self.shielded:
+            try:
+                theta = self.angles[0]
+            except:
+                theta = 3 * math.pi/2
+            r = Cylinder.size
+            #where the shield is looking at (should lag behind a tiny bit)
+            r0 = r * 1.4
+            x0 = x + r0 * math.cos(theta)
+            y0 = y - r0 * math.sin(theta)
+
+            x1, y1, x2, y2, x3, y3, x4, y4 = Cylinder.getHitbox(self, app)
+
+            canvas.create_polygon(x0, y0, x1, y1, x2, y2, x0, y0, fill = "white", width = 0)
+
+            r10 = app.bulletSpeed/2
+            x10 = x + r * math.cos(theta)
+            y10 = y - r * math.sin(theta)
+            #hitbox:
+            canvas.create_oval(x10- r10, y10 - r10, x10+r10, y10+r10, fill = "red", width = 0)
+
+            #old hitbox:
+            #canvas.create_polygon(x1, y1, x2, y2, x3, y3, x4, y4, fill = "red")
+            #direction looking in:
+            #canvas.create_line(x, y, x0, y0, fill = "red", width = 3)
+
+    def getHitbox(self, app):
+        x0, y0, x1, y1  = getSCellBounds(app, self.row, self.col)
+        x, y = x0 + app.sSize//2, y0 + app.sSize//2
+        r = Cylinder.size
+        try:
+            theta = self.angles[0]
+        except:
+            theta = 3 * math.pi/2
+        dtheta1 = Cylinder.shieldSize[0]
+        dtheta2 = Cylinder.shieldSize[1]
+
+        theta1 = theta + dtheta1
+        theta2 = theta + dtheta2
+
+        x1 = x + r * math.cos(theta1)
+        y1 = y - r * math.sin(theta1)
+        x2 = x + r * math.cos(theta2)
+        y2 = y - r * math.sin(theta2)
+
+        #hitbox for the shield:
+        r3 = app.bulletSpeed
+        dx3 = r3 * math.cos(theta)
+        dy3 =  - r3 * math.sin(theta)
+        x3 = x2 + dx3
+        y3 = y2 + dy3
+        x4 = x1 + dx3
+        y4 = y1 + dy3
+
+        return x1, y1, x2, y2, x3, y3, x4, y4
+
+
     #does not move
     def move(self, app):
         pass
@@ -421,22 +516,26 @@ class Cylinder(Enemy):
 
     def updateAngle(self, app):
         #this can be tweaked a lot for balance. 
-        if self.fireFrame == self.fireRate - 5:
+        #if self.fireFrame == self.fireRate - 5:
 
-            pRow, pCol = app.pointerRow, app.pointerCol
-            x0, y0, x1, y1  = getSCellBounds(app, self.row, self.col)
-            x, y = x0 + app.sSize//2, y0 + app.sSize//2
-            x0, y0 = getPointerXY(app)
+        pRow, pCol = app.pointerRow, app.pointerCol
+        x0, y0, x1, y1  = getSCellBounds(app, self.row, self.col)
+        x, y = x0 + app.sSize//2, y0 + app.sSize//2
+        x0, y0 = getPointerXY(app)
 
-            yDif = y0 - y
-            xDif = x - x0
-            try:
-                newAngle = math.atan(yDif/xDif)
-            except:
-                newAngle = math.atan(-yDif/.01)
-            if xDif > 0:
-                newAngle = newAngle + math.pi
-            self.angle = newAngle 
+        yDif = y0 - y
+        xDif = x - x0
+        try:
+            newAngle = math.atan(yDif/xDif)
+        except:
+            newAngle = math.atan(-yDif/.01)
+        if xDif > 0:
+            newAngle = newAngle + math.pi
+        self.angle = newAngle 
+        self.angles.append(newAngle)
+
+        while len(self.angles) > self.angleNum:
+            self.angles.pop(0)
 
 class Shooter(Enemy):
     #maximum health
@@ -544,8 +643,11 @@ class Shooter(Enemy):
         y4 = y - r * math.sin(theta4)
         canvas.create_line(x, y, x4, y4, fill = "red")
 
+        whiteBox = rgbString(223, 217, 205)
+        blackBox = rgbString(58, 56, 50)
+        color = whiteBox if self.justHit else blackBox
         #final product
-        canvas.create_polygon(x0, y0, x1, y1, x2, y2, x3, y3, x4, y4, fill = "grey", outline = "black", width = 2)
+        canvas.create_polygon(x0, y0, x1, y1, x2, y2, x3, y3, x4, y4, fill = color, outline = "black", width = 2)
 
 
 def distance(x0, y0, x1, y1):
@@ -766,6 +868,7 @@ def timerFired(self):
     checkGameOver(self)
     pathFind(self)
     moveEnemies(self)
+    checkEnemyFlash(self)
     enemyBulletController(self)
 
 def enemyBulletController(self):
@@ -787,6 +890,10 @@ def moveEnemies(self):
     for enemy in self.enemies:
         #if type(enemy) == Shooter:
             enemy.move(self)
+
+def checkEnemyFlash(self):
+    for enemy in self.enemies:
+        enemy.checkJustHit()
 
 def checkGameOver(self):
     if len(self.enemies) == 0:
@@ -819,12 +926,22 @@ def checkBulletsInEnemy(self):
         while i < len(self.pointerBullets):
             bullet = self.pointerBullets[i]
             x, y = bullet.getPos()
+            result = enemy.pointInEnemy(self, x, y)
+            if result == True:
+                enemy.subtractHealth()
+                self.pointerBullets.pop(i)
+            elif result == None:
+                self.pointerBullets.pop(i)
+            else:
+                i += 1
+            """
             if enemy.pointInEnemy(self, x, y):
                 #enemy.health -= 1
                 enemy.subtractHealth()
                 self.pointerBullets.pop(i)
             else:
                 i += 1
+            """
 
 def checkBulletsInPointer(self):
     #O(n) yay
