@@ -279,8 +279,8 @@ class Core(Enemy):
         x0, y0, x1, y1  = getSCellBounds(app, self.row, self.col)
         x, y = x0 + app.sSize//2, y0 + app.sSize//2
         r = Core.radius
-        whiteBox = "grey"
-        blackBox = rgbString(58, 56, 50)
+        whiteBox = rgbString(223, 217, 205)
+        blackBox = "grey"
         color = whiteBox if self.justHit else blackBox
         canvas.create_oval(x-r, y-r, x+r, y+r, fill = color, width = 0)
 
@@ -388,7 +388,7 @@ class Cylinder(Enemy):
         self.fireFrame = 0
 
         self.angles = []   # last in first out system for keeping track of the number of angles
-        self.angleNum = 40   # use the angle n frames measured ago. 
+        self.angleNum = 5 # 40   # use the angle n frames measured ago. 
 
         self.shielded = True
 
@@ -441,7 +441,7 @@ class Cylinder(Enemy):
             x10 = x + r * math.cos(theta)
             y10 = y - r * math.sin(theta)
             #hitbox:
-            canvas.create_oval(x10- r10, y10 - r10, x10+r10, y10+r10, fill = "red", width = 0)
+            #canvas.create_oval(x10- r10, y10 - r10, x10+r10, y10+r10, fill = "red", width = 0)
 
             #old hitbox:
             #canvas.create_polygon(x1, y1, x2, y2, x3, y3, x4, y4, fill = "red")
@@ -653,7 +653,7 @@ class Shooter(Enemy):
 def distance(x0, y0, x1, y1):
     return ((x0-x1)**2 + (y0-y1)**2)**0.5
 
-def appStarted(self, hard = False):
+def appStarted(self, hard = True):
     self.timerDelay = 20
     self.debug = False
     self.gameLost = False
