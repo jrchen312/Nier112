@@ -1275,7 +1275,7 @@ def drawEnemyBullets(self, canvas):
         #3.5 on average
         canvas.create_image(x, y, image=ImageTk.PhotoImage(self.redBullet))
 
-        #if using all 3 at the same time; 
+        #if using all 3 at the same time; ~5.5
 
 def drawPointer(self, canvas):
     
