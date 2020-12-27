@@ -440,6 +440,17 @@ class Cylinder(Enemy):
             r10 = app.bulletSpeed/2
             x10 = x + r * math.cos(theta)
             y10 = y - r * math.sin(theta)
+
+            #draws the triangle on the opposite side. 
+            """
+            theta = theta + math.pi
+            r0 = r * 1.4
+            x0 = x + r0 * math.cos(theta)
+            y0 = y - r0 * math.sin(theta)
+            x1, y1, x2, y2 = Cylinder.getOppositeTriangle(self, app)
+            canvas.create_polygon(x0, y0, x1, y1, x2, y2, x0, y0, fill = "white", width = 0)
+            """
+
             #hitbox:
             #canvas.create_oval(x10- r10, y10 - r10, x10+r10, y10+r10, fill = "red", width = 0)
 
@@ -447,6 +458,24 @@ class Cylinder(Enemy):
             #canvas.create_polygon(x1, y1, x2, y2, x3, y3, x4, y4, fill = "red")
             #direction looking in:
             #canvas.create_line(x, y, x0, y0, fill = "red", width = 3)
+    def getOppositeTriangle(self, app):
+        x0, y0, x1, y1  = getSCellBounds(app, self.row, self.col)
+        x, y = x0 + app.sSize//2, y0 + app.sSize//2
+        r = Cylinder.size
+        try:
+            theta = self.angles[0] + math.pi
+        except:
+            theta = 3 * math.pi/2 + math.pi
+        dtheta1 = Cylinder.shieldSize[0]
+        dtheta2 = Cylinder.shieldSize[1]
+        theta1 = theta + dtheta1
+        theta2 = theta + dtheta2
+
+        x1 = x + r * math.cos(theta1)
+        y1 = y - r * math.sin(theta1)
+        x2 = x + r * math.cos(theta2)
+        y2 = y - r * math.sin(theta2)
+        return x1, y1, x2, y2
 
     def getHitbox(self, app):
         x0, y0, x1, y1  = getSCellBounds(app, self.row, self.col)
@@ -676,6 +705,15 @@ def appStarted(self, hard = True):
 
     self.pointerHealth = 10
     self.maxPointerHealth = 10
+
+    self.whiteBullet = self.loadImage('images/whiteBullet.png')
+    self.redBullet = self.loadImage('images/redBullet.png')
+    self.blueBullet = self.loadImage('images/blueBullet.png')
+
+    self.i = 0
+    self.timerStart = time.time()
+    self.totalTime = 0
+    # self.i, self.timerStart, self.totalTime
     resetApp(self)
 
 def resetApp(self):
@@ -870,6 +908,16 @@ def timerFired(self):
     moveEnemies(self)
     checkEnemyFlash(self)
     enemyBulletController(self)
+    timerFiredSpeed(self)
+
+def timerFiredSpeed(self):
+    #self.i, self.timerStart, self.totalTime
+    ticks = 25
+    if self.i == 0:
+        self.totalTime = time.time() - self.timerStart
+        self.timerStart = time.time()
+        print(self.totalTime)
+    self.i = (self.i + 1) % ticks
 
 def enemyBulletController(self):
     for enemy in self.enemies:
@@ -956,7 +1004,7 @@ def checkBulletsInPointer(self):
             i += 1
 
 def pointInPointer(self, x, y):
-    hitbox = 13
+    hitbox = 23 #should be 13 mayhpas
     x0, y0 = getPointerXY(self)
     if distance(x, y, x0, y0) < hitbox:
         return True
@@ -1201,6 +1249,12 @@ def drawSmallGrid(self, canvas):
                 x0, y0, x1, y1 = x0 + smallShift, y0 + smallShift, x1 - smallShift, y1 - smallShift
                 canvas.create_rectangle(x0, y0, x1, y1, fill = 'red')
 
+def getCachedPhotoImage(self, image):
+    # stores a cached version of the PhotoImage in the PIL/Pillow image
+    if ('cachedPhotoImage' not in image.__dict__):
+        image.cachedPhotoImage = ImageTk.PhotoImage(image)
+    return image.cachedPhotoImage
+
 def drawPointerBullets(self, canvas):
     for bullet in self.pointerBullets:
         x, y = bullet.x, bullet.y
@@ -1210,8 +1264,18 @@ def drawPointerBullets(self, canvas):
 def drawEnemyBullets(self, canvas):
     for bullet in self.enemyBullets:
         x, y = bullet.x, bullet.y
+        #2 generally
         redColor = rgbString(205, 102, 77)
         canvas.create_oval(x-10, y-10, x+10, y+10, fill = redColor, width = 0)
+
+        #this is 1.5 times more laggy lol. (about 3)
+        photoImage = getCachedPhotoImage(self, (self.redBullet))
+        canvas.create_image(x, y, image=photoImage)
+
+        #3.5 on average
+        canvas.create_image(x, y, image=ImageTk.PhotoImage(self.redBullet))
+
+        #if using all 3 at the same time; 
 
 def drawPointer(self, canvas):
     
