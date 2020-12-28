@@ -1264,16 +1264,16 @@ def drawPointerBullets(self, canvas):
 def drawEnemyBullets(self, canvas):
     for bullet in self.enemyBullets:
         x, y = bullet.x, bullet.y
-        #2 generally
+        #2 generally | 1.2
         redColor = rgbString(205, 102, 77)
         canvas.create_oval(x-10, y-10, x+10, y+10, fill = redColor, width = 0)
 
-        #this is 1.5 times more laggy lol. (about 3)
-        photoImage = getCachedPhotoImage(self, (self.redBullet))
-        canvas.create_image(x, y, image=photoImage)
+        #this is 1.5 times more laggy lol. (about 3) | (1.6, unplayable)
+        #photoImage = getCachedPhotoImage(self, (self.redBullet))
+        #canvas.create_image(x, y, image=photoImage)
 
         #3.5 on average
-        canvas.create_image(x, y, image=ImageTk.PhotoImage(self.redBullet))
+        #canvas.create_image(x, y, image=ImageTk.PhotoImage(self.redBullet))
 
         #if using all 3 at the same time; ~5.5
 
