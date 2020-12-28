@@ -570,7 +570,7 @@ class Shooter(Enemy):
     #maximum health
     maxHealth = 2
     size = 20
-    killerInstinct = 20 #stops moving at this distance. 
+    killerInstinct = 16 #stops moving at this distance. (12)
     tooFar = 40  #max range
     bulletSpeed = 8
 
@@ -584,7 +584,7 @@ class Shooter(Enemy):
         self.moveFrame = 0
         self.moveFrames = 4
         
-        self.fireRate = 20
+        self.fireRate = 28
         self.fireFrame = 0
     
     #Checks if a X (xx) and Y (yy) are in the shooter or not. 
@@ -1264,7 +1264,7 @@ def drawSmallGrid(self, canvas):
                 x0, y0, x1, y1 = getSCellBounds(self, box.row, box.col)
                 smallShift = 0
                 x0, y0, x1, y1 = x0 + smallShift, y0 + smallShift, x1 - smallShift, y1 - smallShift
-                canvas.create_rectangle(x0, y0, x1, y1, fill = 'red')
+                canvas.create_rectangle(x0, y0, x1, y1, fill = 'white', width = 1)
 
 def getCachedPhotoImage(self, image):
     # stores a cached version of the PhotoImage in the PIL/Pillow image
