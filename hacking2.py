@@ -376,8 +376,8 @@ class Cylinder(Enemy):
     size = 18
     tooFar = 50
     bulletSpeed = 14
-    fireRate = 17
-    shieldSize = [-math.pi/5, math.pi/5]
+    fireRate = 25
+    shieldSize = [-math.pi/4, math.pi/4]
 
     def __init__(self, row, col):
         super().__init__(row, col, Cylinder.maxHealth)
@@ -388,7 +388,7 @@ class Cylinder(Enemy):
         self.fireFrame = 0
 
         self.angles = []   # last in first out system for keeping track of the number of angles
-        self.angleNum = 5 # 40   # use the angle n frames measured ago. 
+        self.angleNum = 40 # 40   # use the angle n frames measured ago. 
 
         self.shielded = True
 
@@ -682,7 +682,7 @@ class Shooter(Enemy):
 def distance(x0, y0, x1, y1):
     return ((x0-x1)**2 + (y0-y1)**2)**0.5
 
-def appStarted(self, hard = True):
+def appStarted(self, hard = False):
     self.timerDelay = 20
     self.debug = False
     self.gameLost = False
@@ -706,7 +706,7 @@ def appStarted(self, hard = True):
     #pointer
     self.pointerHealth = 10
     self.maxPointerHealth = 10
-    self.pointerSpeed = 5
+    self.pointerSpeed = 4
 
     self.whiteBullet = self.loadImage('images/whiteBullet.png')
     self.redBullet = self.loadImage('images/redBullet.png')
