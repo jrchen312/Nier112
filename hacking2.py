@@ -375,7 +375,7 @@ class Cylinder(Enemy):
     maxHealth = 3
     size = 18
     tooFar = 50
-    bulletSpeed = 20
+    bulletSpeed = 14
     fireRate = 17
     shieldSize = [-math.pi/5, math.pi/5]
 
@@ -570,7 +570,7 @@ class Shooter(Enemy):
     #maximum health
     maxHealth = 2
     size = 20
-    killerInstinct = 12 #stops moving at this distance. 
+    killerInstinct = 20 #stops moving at this distance. 
     tooFar = 40  #max range
     bulletSpeed = 8
 
@@ -703,8 +703,10 @@ def appStarted(self, hard = True):
         self.numEnemies = 2
         self.boxRate = 3 + self.numEnemies
 
+    #pointer
     self.pointerHealth = 10
     self.maxPointerHealth = 10
+    self.pointerSpeed = 5
 
     self.whiteBullet = self.loadImage('images/whiteBullet.png')
     self.redBullet = self.loadImage('images/redBullet.png')
@@ -860,11 +862,14 @@ def keyPressed(self, event):
         self.debug = not self.debug
 
 def setPointerGoal(self, shift):
-    for i in range(1, 4):
+    #was range(1, 4)
+    speed = self.pointerSpeed + 1
+    for i in range(1, speed):
         if not isLegalPointerMove(self, (shift[0] * i,  shift[1] * i)):
             i -= 1
             break
     self.pointerGoal = shift[0] * i, shift[1] * i
+    print(self.pointerGoal)
     #print(f"goal: {self.pointerGoal}, {i}")
 
 def mouseMoved(self, event):
@@ -1075,15 +1080,27 @@ def movePointer(self):
         if dRow > 0:
             self.pointerRow += 1
             dRow -= 1
+            if dRow >= 1:
+                self.pointerRow += 1
+                dRow -= 1
         elif dRow < 0:
             self.pointerRow -= 1
             dRow += 1
+            if dRow <= -1:
+                self.pointerRow -= 1
+                dRow += 1 
         elif dCol > 0:
             self.pointerCol += 1
             dCol -= 1
+            if dCol >= 1:
+                self.pointerCol += 1
+                dCol -= 1
         elif dCol < 0:
             self.pointerCol -= 1
             dCol += 1
+            if dCol <= -1:
+                self.pointerCol -= 1
+                dCol += 1
         else:
             self.pointerGoal = None
         self.pointerGoal = (dRow, dCol)
