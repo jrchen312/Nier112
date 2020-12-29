@@ -69,17 +69,15 @@ class SmallBox(object):
         self.successors = []
         for (dx, dy) in [(+1,0), (-1,0), (0,+1), (0,-1), (-1, -1), (1, 1), (-1, 1), (1, -1)]:
             row, col = self.row + dx, self.col + dy
-            if inBounds(app, row, col) and not app.smallBoxGrid[row][col].isBarrier() and onlyOneNeighbor(app, row, col):
+            if inBounds(app, row, col) and not app.smallBoxGrid[row][col].isBarrier() and onlyOneNeighbor(app, row, col, dx, dy):
                 self.successors.append(app.smallBoxGrid[row][col])
-    
-    def __lt__(self, other):
-        return False
     
     def __repr__(self):
         return f"({self.row}, {self.col})"
 
-def onlyOneNeighbor(app, row, col):
-    if (abs(row) + abs(col)) < 2:
+def onlyOneNeighbor(app, row, col, dx, dy):
+    #BUG bug BUG WHOA
+    if (abs(dx) + abs(dy)) < 2:
         return True
     num = 0
     for (dx, dy) in [(+1,0), (-1,0), (0,+1), (0,-1)]:
@@ -372,7 +370,8 @@ class Core(Enemy):
             app.enemyBullets.append(bullet)
 
 class Cylinder(Enemy):
-    maxHealth = 3
+    maxHealth = 2
+    shieldHealth = 6
     size = 18
     tooFar = 50
     bulletSpeed = 14
@@ -383,6 +382,7 @@ class Cylinder(Enemy):
         super().__init__(row, col, Cylinder.maxHealth)
         self.path = []
         self.found = False
+        self.shieldHealth = Cylinder.shieldHealth
 
         self.fireRate = Cylinder.fireRate
         self.fireFrame = 0
@@ -406,6 +406,9 @@ class Cylinder(Enemy):
             x10 = x + r1 * math.cos(theta)
             y10 = y - r1 * math.sin(theta)
             if distance(xx, yy, x10, y10) < r10:
+                self.shieldHealth -= 1
+                if self.shieldHealth <= 0:
+                    self.shielded = False
                 return None
 
         if distance(x, y, xx, yy) < r1:
@@ -697,8 +700,9 @@ def appStarted(self, hard = False):
     self.sCols = self.lCols * self.lSize // self.sSize #
 
     if hard:
-        self.numEnemies = 8
-        self.boxRate = 20
+        self.numEnemies = 6
+        self.boxRate = 16
+        #box rate: 10, number of successful: 7 barriers, == 46% for 7 or greater.
     else:
         self.numEnemies = 2
         self.boxRate = 3 + self.numEnemies
@@ -793,8 +797,7 @@ def makeGrid(self):
             lRow, lCol = getLCell(self, x0, y0)
             if 0 <= lRow < self.lRows and 0 <= lCol < self.lCols and self.stage[lRow][lCol] != None:
                 isBarrier = True
-            smallBox = SmallBox(row, col, isBarrier)
-            grid[row].append(smallBox)
+            grid[row].append(SmallBox(row, col, isBarrier))
     return grid
 
 def simpleGenerateEnemy(self, num):
