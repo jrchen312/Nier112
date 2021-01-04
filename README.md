@@ -6,7 +6,7 @@
 ## Project demonstration video:
 https://youtu.be/3imFxIZsND4
 
-## Demonstration of A* pathfinding (added after the demonstration video):
+## Demonstration of A* pathfinding:
 https://youtu.be/4GitDYf6yN4
 
 
