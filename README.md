@@ -3,14 +3,14 @@
 
 
 
-##Project demonstration video:
+## Project demonstration video:
 https://youtu.be/3imFxIZsND4
 
-##Demonstration of A* pathfinding (added after the demonstration video):
+## Demonstration of A* pathfinding (added after the demonstration video):
 https://youtu.be/4GitDYf6yN4
 
 
-##Features:
+## Features:
 * Maze generation with recursive backtracking
 * A* pathfinding for enemies
 * AI for each enemy
