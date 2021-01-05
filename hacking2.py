@@ -712,9 +712,9 @@ def appStarted(self, hard = False):
     self.maxPointerHealth = 10
     self.pointerSpeed = 4
 
-    self.whiteBullet = self.loadImage('images/whiteBullet.png')
-    self.redBullet = self.loadImage('images/redBullet.png')
-    self.blueBullet = self.loadImage('images/blueBullet.png')
+    #self.whiteBullet = self.loadImage('images/whiteBullet.png')
+    #self.redBullet = self.loadImage('images/redBullet.png')
+    #self.blueBullet = self.loadImage('images/blueBullet.png')
 
     self.i = 0
     self.timerStart = time.time()
