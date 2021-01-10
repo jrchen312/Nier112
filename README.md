@@ -16,3 +16,8 @@ https://youtu.be/4GitDYf6yN4
 * AI for each enemy
 * Collision detection
 * Different animations for each enemy/player
+
+
+## Installation:
+* Requires Python3 installed on the computer, as well as the installation of modules including requests, pygame, and tkinter.
+* Run main.py to start the game.  
